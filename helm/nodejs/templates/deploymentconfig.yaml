@@ -36,13 +36,13 @@ spec:
           timeoutSeconds: 3
           initialDelaySeconds: 3
           httpGet:
-            path: "/"
+            path: "/health"
             port: 8080
         livenessProbe:
           timeoutSeconds: 3
           initialDelaySeconds: 30
           httpGet:
-            path: "/"
+            path: "/health"
             port: 8080
         resources:
           limits:
