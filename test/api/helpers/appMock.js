@@ -1,11 +1,11 @@
 'use strict'
 
-const mongodb = require('./utilities/mongodb')
+const mongodb = require('./mongodbMock')
 const SwaggerExpress = require('swagger-express-mw')
 const app = require('express')()
 const port = process.env.PORT || 8080;
 const config = {
-  appRoot: __dirname // required config
+  appRoot: __dirname + '/../../../' // required config
 };
 
 

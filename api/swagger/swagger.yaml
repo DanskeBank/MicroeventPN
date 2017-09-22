@@ -4,57 +4,68 @@ info:
   title: Hello World App
 # during dev, should point to your local machine
 host: localhost:10010
-# basePath prefixes all resource paths 
 basePath: /
-# 
 schemes:
   # tip: remove http to make production-grade
   - http
   - https
-# format of bodies a client can send (Content-Type)
 consumes:
   - application/json
-# format of the responses to the client (Accepts)
 produces:
   - application/json
 paths:
   /health:
     x-swagger-router-controller: probe
     get:
-      description: Returns 'OK' to the caller
-      # used as the method name of the controller
+      description: Returns 'OK' to the caller (if this thing works)
       operationId: probe
       responses:
         "200":
           description: Success
           schema:
-            # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
-        # responses may fall through to errors
+            $ref: "#/definitions/HealthProbeResponse"
         default:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /hello:
-    # binds a127 app logic to a route
-    x-swagger-router-controller: hello_world
-    get:
-      description: Returns 'Hello' to the caller
-      # used as the method name of the controller
-      operationId: hello
+  /enroll:
+    x-swagger-router-controller: enroll
+    post:
+      description: Start enforllment for a new team
+      operationId: initEnrollment
       parameters:
-        - name: name
-          in: query
-          description: The name of the person to whom to say hello
-          required: false
-          type: string
+        - name: initEnrollment
+          in: body
+          description: Enrollment information
+          required: true
+          schema:
+            $ref: "#/definitions/InitEnrollmentRequest"
       responses:
         "200":
           description: Success
           schema:
-            # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
-        # responses may fall through to errors
+            $ref: "#/definitions/HealthProbeResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /enroll/{enrollId}:
+    x-swagger-router-controller: enroll
+    put:
+      description: Completes enrollment of a new team
+      operationId: finalizeEnrollment
+      parameters:
+        - name: enrollId
+          in: path
+          description: Numeric ID of the user to get
+          required: true
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/HealthProbeResponse"
         default:
           description: Error
           schema:
@@ -63,11 +74,26 @@ paths:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
 definitions:
-  HelloWorldResponse:
+  InitEnrollmentRequest:
     required:
-      - message
+      - teamName
+      - teamMembers
+      - teamEmailAddress
     properties:
-      message:
+      teamName:
+        type: string
+      teamMembers:
+        type: array
+        items:
+          type: string
+      teamEmailAddress:
+        type: string
+        format: email
+  HealthProbeResponse:
+    required:
+      - status
+    properties:
+      status:
         type: string
   ErrorResponse:
     required:

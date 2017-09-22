@@ -8,11 +8,17 @@
   "license": "MIT",
   "main": "app.js",
   "dependencies": {
+    "@sendgrid/mail": "^6.1.4",
     "express": "^4.12.3",
-    "swagger-express-mw": "^0.1.0"
+    "mongodb": "^2.2.31",
+    "pipes-and-filters": "0.0.4",
+    "q": "^1.5.0",
+    "swagger-express-mw": "^0.1.0",
+    "uuid": "^3.1.0"
   },
   "devDependencies": {
     "should": "^7.1.0",
+    "sinon": "^3.3.0",
     "supertest": "^1.0.0"
   },
   "engine": {
