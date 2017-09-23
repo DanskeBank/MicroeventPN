@@ -3,14 +3,10 @@
 const mongodb = require('../../utilities/mongodb')
 const defaultPipe = require('../helpers/defaultPipe')
 const emailService = require('@sendgrid/mail')
+const crypto = require('crypto')
 emailService.setApiKey(process.env.SENDGRID_API_KEY)
 
 const finalizeEnrollment = (req, res) => {
-  const enrollId = req.swagger.params.enrollId.value
-  if (!enrollId) {
-    res.status(400).send({message: 'Bad Request'})
-  }
-
   const pipeline = defaultPipe.getPipelineInstance(finalizeEnrollmentWorker, (err, result) => {
     // This is executed at the end of the pipeline
     if (err) {
@@ -41,7 +37,27 @@ const initEnrollment = (req, res) => {
 }
 
 const finalizeEnrollmentWorker = (input, next) => {
-
+  const enrollId = input.swagger.params.enrollId.value
+  if (!enrollId) {
+    next(new Error('Bad Request'), input)
+  } else {
+    mongodb.tryGetEnrollment(enrollId).then(enrollment => {
+      crypto.randomBytes(48, (err, buffer) => {
+        if (err) {
+          next(err, input)
+        } else {
+          const apiKey = buffer.toString('hex')
+          mongodb.storeTeam(apiKey, enrollment).then(() => {
+            next(null, {status: 'OK', apiKey})
+          }).catch(err => {
+            next(err, input)
+          })
+        }
+      })
+    }).catch(err => {
+      next(err, input)
+    })
+  }
 }
 
 const initEnrollmentWorker = (input, next) => {
@@ -50,8 +66,8 @@ const initEnrollmentWorker = (input, next) => {
       to: input.body.teamEmailAddress,
       from: 'contacts@parsonsnet.com',
       subject: 'Your API Key',
-      text: 'Welcome to ParsonsNet! This is your API Key: ' + input.requestId,
-      html: '<h1>Welcome to ParsonsNet</h1>This is your API Key: <strong>' + input.requestId + '</strong>',
+      text: 'Welcome to ParsonsNet! This is your confirmation key: ' + input.requestId,
+      html: '<h1>Welcome to ParsonsNet</h1>This is your confirmation key: <strong>' + input.requestId + '</strong>',
     }
     emailService.send(msg)
     next(null, {status: 'OK'})

@@ -1,12 +1,12 @@
 'use strict'
 
-const uuidv4 = require('uuid/v4');
+const uuidv4 = require('uuid/v4')
 const Pipeline = require('pipes-and-filters')
 
 const logRequestToAudit = (input, next) => {
   /* TODO: implement */
   let error = null
-  input.requestId = uuidv4();
+  input.requestId = uuidv4()
   console.log('Log request to audit done')
   next(error, input)
 }

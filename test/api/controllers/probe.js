@@ -1,6 +1,6 @@
-var should = require('should');
-var request = require('supertest');
-var server = require('../helpers/appMock');
+var should = require('should')
+var request = require('supertest')
+var server = require('../helpers/appMock')
 
 describe('controllers', function() {
 
@@ -8,7 +8,7 @@ describe('controllers', function() {
 
     describe('GET /health', function() {
 
-      it('should return a default string', function(done) {
+      it('should return status OK', function(done) {
 
         request(server)
           .get('/health')
@@ -16,16 +16,16 @@ describe('controllers', function() {
           .expect('Content-Type', /application\/json/)
           .expect(200)
           .end(function(err, res) {
-            should.not.exist(err);
+            should.not.exist(err)
 
-            res.body.should.eql({status: 'OK'});
+            res.body.should.eql({status: 'OK'})
 
-            done();
-          });
-      });
+            done()
+          })
+      })
 
-    });
+    })
 
-  });
+  })
 
-});
+})
