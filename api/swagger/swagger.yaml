@@ -70,12 +70,18 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /monitoring:
+  /monitoring/{teamId}:
     x-swagger-router-controller: monitoring
     post:
       description: Push update on local system status. Data older than 5 minutes will be considered stale.
       operationId: pushUpdate
       parameters:
+        - name: teamId
+          in: path
+          description: Numeric ID of the team owning the monitor
+          required: true
+          type: string
+          format: uuid
         - name: updateStatus
           in: body
           description: Update object generated from the local monitor containing microservices status
@@ -94,6 +100,13 @@ paths:
     get:
       description: Get local system status.
       operationId: getStatus
+      parameters:
+        - name: teamId
+          in: path
+          description: Numeric ID of the team owning the monitor
+          required: true
+          type: string
+          format: uuid
       responses:
         "200":
           description: Success

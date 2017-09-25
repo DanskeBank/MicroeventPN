@@ -3,8 +3,9 @@
 const mongodb = require('../../utilities/mongodb')
 const defaultPipe = require('../helpers/defaultPipe')
 const emailService = require('@sendgrid/mail')
+const uuidv4 = require('uuid/v4')
 const crypto = require('crypto')
-emailService.setApiKey(process.env.SENDGRID_API_KEY)
+const Pipeline = require('pipes-and-filters')
 
 const finalizeEnrollment = (req, res) => {
   const pipeline = defaultPipe.getPipelineInstance(finalizeEnrollmentWorker, (err, result) => {
@@ -39,40 +40,45 @@ const initEnrollment = (req, res) => {
 const finalizeEnrollmentWorker = (input, next) => {
   const enrollId = input.swagger.params.enrollId.value
   if (!enrollId) {
-    next(new Error('Bad Request'), input)
+    next(new Error('Bad Request'), Pipeline.break)
   } else {
     mongodb.tryGetEnrollment(enrollId).then(enrollment => {
       crypto.randomBytes(48, (err, buffer) => {
         if (err) {
-          next(err, input)
+          next(err, Pipeline.break)
         } else {
           const apiKey = buffer.toString('hex')
           mongodb.storeTeam(apiKey, enrollment).then(() => {
             next(null, {status: 'OK', apiKey})
           }).catch(err => {
-            next(err, input)
+            next(err, Pipeline.break)
           })
         }
       })
     }).catch(err => {
-      next(err, input)
+      next(err, Pipeline.break)
     })
   }
 }
 
 const initEnrollmentWorker = (input, next) => {
+  input.body.id = uuidv4()
   mongodb.storeEnrollment(input.requestId, input.body).then(() => {
     const msg = {
       to: input.body.teamEmailAddress,
       from: 'contacts@parsonsnet.com',
-      subject: 'Your API Key',
+      subject: 'Your confirmation mail for ParsonsNet',
       text: 'Welcome to ParsonsNet! This is your confirmation key: ' + input.requestId,
       html: '<h1>Welcome to ParsonsNet</h1>This is your confirmation key: <strong>' + input.requestId + '</strong>',
     }
-    emailService.send(msg)
-    next(null, {status: 'OK'})
+    emailService.setApiKey(process.env.SENDGRID_API_KEY)
+    emailService.send(msg).then(() => {
+      next(null, {status: 'OK'})
+    }).catch(err => {
+      next(err, Pipeline.break)
+    })
   }).catch(err => {
-    next(err, input)
+    next(err, Pipeline.break)
   })
 }
 

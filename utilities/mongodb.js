@@ -2,6 +2,9 @@
 
 const MongoClient = require('mongodb').MongoClient
 const Q = require('q')
+const uuidv4 = require('uuid/v4')
+const itemsPerPage = 10
+
 const getMongoConnectionDetails = () => {
   let mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL
   let mongoURLLabel = ''
@@ -28,11 +31,14 @@ const getMongoConnectionDetails = () => {
     mongoURL
   }
 }
+
 const mongoConnectionDetails = getMongoConnectionDetails()
 
 let currentDBConnection = null
 let enrollmentsCollection = null
 let teamsCollection = null
+let monitorsStatusCollection = null
+let opsChatCollection = null
 
 const openConnection = () => {
   const d = Q.defer()
@@ -42,6 +48,8 @@ const openConnection = () => {
     if (!err) {
       currentDBConnection = db
       teamsCollection = currentDBConnection.collection('teams')
+      monitorsStatusCollection = currentDBConnection.collection('monitorsStatus')
+      opsChatCollection = currentDBConnection.collection('opsChat')
       enrollmentsCollection = currentDBConnection.collection('enrollments')
       enrollmentsCollection.createIndex('createdAt', { expireAfterSeconds: 3600 } )
       console.log('Connected to MongoDB at ' + mongoConnectionDetails.mongoURLLabel)
@@ -55,24 +63,65 @@ const openConnection = () => {
   return d.promise
 }
 
-const tryGetEnrollment = function(enrollId) {
-  return tryGetEntity(enrollId, enrollmentsCollection, true)
+const tryGetEnrollment = (enrollmentId) => {
+  return tryGetEntity(enrollmentId, enrollmentsCollection, true)
 }
 
-const tryGetTeam = function(teamId) {
-  return tryGetEntity(teamId, teamsCollection)
+const tryGetTeam = (apiKey) => {
+  return tryGetEntity(apiKey, teamsCollection)
 }
 
-const storeEnrollment = (key, value) => {
-  return storeEntity(key, value, enrollmentsCollection)
+const tryGetMonitorStatus = (teamId) => {
+  return tryGetEntity(teamId, monitorsStatusCollection)
 }
 
-const storeTeam = (key, value) => {
-  return storeEntity(key, value, teamsCollection)
+const storeEnrollment = (enrollmentId, enrollment) => {
+  return storeEntity(enrollmentId, enrollment, enrollmentsCollection)
+}
+
+const storeTeam = (apiKey, team) => {
+  return storeEntity(apiKey, team, teamsCollection)
+}
+
+const storeMonitorStatus = (teamId, monitorStatus) => {
+  return storeEntity(teamId, monitorStatus, monitorsStatusCollection)
+}
+
+const tryGetChatMessages = (pageId) => {
+  if (!currentDBConnection) {
+    throw new Error('Illegal state. Open a connection to the database by invoking openConnection before invoking tryGetEntity.')
+  }
+
+  // Get the documents collection
+  const d = Q.defer()
+
+  // Find some documents - Make it better: https://scalegrid.io/blog/fast-paging-with-mongodb/
+  collection.find().skip(pageId * itemsPerPage).limit(itemsPerPage).toArray(function(err, docs) {
+    if (err) {
+      d.reject(err)
+    } else {
+      d.resolve(docs)
+      if (docs && docs.length > 0 && deleteAfterFetch) {
+        collection.deleteOne({key: entityId})
+      }
+    }
+  })
+
+  return d.promise
+}
+
+const storeChatMessage = (chatMessage) => {
+  const chatMessageId = uuidv4()
+  return storeEntity(chatMessageId, chatMessage, opsChatCollection)
 }
 
 const storeEntity = (key, value, collection) => {
+  if (!currentDBConnection) {
+    throw new Error('Illegal state. Open a connection to the database by invoking openConnection before invoking tryGetEntity.')
+  }
+
   const d = Q.defer()
+
   collection.insert({key, value, createdAt: new Date()}, function(err, result){
     if (err) {
       console.error('Failed connection to MongoDB at ' + mongoConnectionDetails.mongoURLLabel)
@@ -87,7 +136,7 @@ const storeEntity = (key, value, collection) => {
 
 const tryGetEntity = (entityId, collection, deleteAfterFetch) => {
   if (!currentDBConnection) {
-    throw new Error('Illegal state. Open a connection to the database by invoking openConnection before invoking tryGetEnrollment.')
+    throw new Error('Illegal state. Open a connection to the database by invoking openConnection before invoking tryGetEntity.')
   }
 
   // Get the documents collection
@@ -114,6 +163,8 @@ const closeConnection = () => {
     currentDBConnection = null
     enrollmentsCollection = null
     teamsCollection = null
+    monitorsStatusCollection = null
+    opsChatCollection = null
   }
 }
 
@@ -123,5 +174,9 @@ module.exports = {
   storeEnrollment,
   tryGetTeam,
   storeTeam,
+  tryGetMonitorStatus,
+  storeMonitorStatus,
+  tryGetChatMessages,
+  storeChatMessage,
   closeConnection
 }

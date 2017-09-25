@@ -11,8 +11,7 @@ describe('controllers', function() {
     describe('PUT /enroll', function() {
 
       it('should return status OK and APIKey', function(done) {
-
-        sinon.stub(enroll.mongodb, 'tryGetEnrollment').callsFake((enrollmentId) => {
+        const tryGetEnrollmentStub = sinon.stub(enroll.mongodb, 'tryGetEnrollment').callsFake((enrollmentId) => {
           enrollmentId.should.eql('enrollmentId12345')
           return {
             then (cb) {
@@ -27,8 +26,8 @@ describe('controllers', function() {
             },
           }
         })
-
-        sinon.stub(enroll.mongodb, 'storeTeam').callsFake((apiKey, enrollment) => {
+        
+        const storeTeamStub = sinon.stub(enroll.mongodb, 'storeTeam').callsFake((apiKey, enrollment) => {
           should.exist(apiKey)
           should.exist(enrollment)
           enrollment.teamName.should.eql('TeamA')
@@ -49,10 +48,12 @@ describe('controllers', function() {
           .set('Accept', 'application/json')
           .set('Content-Type', 'application/json')
           .expect('Content-Type', /application\/json/)
-          .expect(400)
+          .expect(200)
           .end(function(err, res) {
             res.body.status.should.eql('OK')
             should.exist(res.body.apiKey)
+            storeTeamStub.restore()
+            tryGetEnrollmentStub.restore()
             done()
           })
       })
@@ -79,7 +80,23 @@ describe('controllers', function() {
       })
 
       it('should return status OK', function(done) {
-        sinon.stub(enroll.mongodb, 'storeEnrollment').callsFake((requestId, data) => {
+        const tryGetEnrollmentStub = sinon.stub(enroll.mongodb, 'tryGetEnrollment').callsFake((enrollmentId) => {
+          enrollmentId.should.eql('enrollmentId12345')
+          return {
+            then (cb) {
+              cb({
+                teamName: 'TeamA',
+                teamMembers: ['Gino', 'Pino'],
+                teamEmailAddress: 'tino@gino.com'
+              })
+              return {
+                catch () {}
+              }
+            },
+          }
+        })
+
+        const storeEnrollmentStub = sinon.stub(enroll.mongodb, 'storeEnrollment').callsFake((requestId, data) => {
           should.exist(requestId)
           should.exist(data)
           data.teamName.should.eql('TeamA')
@@ -95,11 +112,26 @@ describe('controllers', function() {
           }
         })
 
-        sinon.stub(enroll.emailService, 'setApiKey')
-        sinon.stub(enroll.emailService, 'sendVerificationEmail').callsFake((data) => {
-          should.exist(data)
-          data.to.should.eql('tino@gino.com')
+        const setApiKeyStub = sinon.stub(enroll.emailService, 'setApiKey')
+
+        const sendStub = sinon.stub(enroll.emailService, 'send').callsFake((msg) => {
+          should.exist(msg)
+          msg.to.should.eql('tino@gino.com')
+          msg.from.should.eql('contacts@parsonsnet.com')
+          msg.subject.should.eql('Your confirmation mail for ParsonsNet')
+          should.exist(msg.text)
+          should.exist(msg.html)
+
+          return {
+            then (cb) {
+              cb()
+              return {
+                catch () {}
+              }
+            },
+          }
         })
+
 
         request(server)
           .post('/enroll')
@@ -113,9 +145,11 @@ describe('controllers', function() {
           .expect(200)
           .end(function(err, res) {
             should.not.exist(err)
-
             res.body.should.eql({status: 'OK'})
-
+            storeEnrollmentStub.restore()
+            setApiKeyStub.restore()
+            tryGetEnrollmentStub.restore()
+            sendStub.restore()
             done()
           })
       })

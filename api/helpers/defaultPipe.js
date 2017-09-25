@@ -2,6 +2,7 @@
 
 const uuidv4 = require('uuid/v4')
 const Pipeline = require('pipes-and-filters')
+const mongodb = require('../../utilities/mongodb')
 
 const logRequestToAudit = (input, next) => {
   /* TODO: implement */
@@ -12,17 +13,33 @@ const logRequestToAudit = (input, next) => {
 }
 
 const authenticateCall = (input, next) => {
-  /* TODO: implement */
-
-  let error = null
-  if (error) {
-    console.error('Authentication error. Aborting...')
-    next(null, Pipeline.break)
-  } else {
-    let output = input
-    console.log('Authenticate call done')
-    next(error, output)
+  const apiKey = input.get('authorization')
+  if (!apiKey) {
+    console.error('Authentication error. No authorization header found. Aborting...')
+    next(new Error('Unauthorized'), Pipeline.break)
+    return
   }
+
+  if ( apiKey == process.env.ADMIN_APIKEY) {
+    input.team = {
+      id: 1,
+      teamName: 'Administrators',
+      teamEmailAddress: 'admin@parsonsnet.com',
+      teamMembers: ['TheBigBrother']
+    }
+    next(null, input)
+    return
+  }
+
+  const team = mongodb.tryGetTeam(apiKey).then(team => {
+    input.team = team
+    console.log('Request authenticated correctly.')
+    next(null, input)
+  }).catch(err => {
+    console.error('Authentication error. Unrecognized APIKey used in request. Aborting...')
+    next(new Error('Unauthorized'), Pipeline.break)
+    return
+  })
 }
 
 const logResponseToAudit = (input, next) => {
