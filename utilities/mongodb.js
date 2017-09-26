@@ -96,14 +96,11 @@ const tryGetChatMessages = (pageId) => {
   const d = Q.defer()
 
   // Find some documents - Make it better: https://scalegrid.io/blog/fast-paging-with-mongodb/
-  collection.find().skip(pageId * itemsPerPage).limit(itemsPerPage).toArray(function(err, docs) {
+  opsChatCollection.find().skip(pageId * itemsPerPage).limit(itemsPerPage).toArray(function(err, docs) {
     if (err) {
       d.reject(err)
     } else {
       d.resolve(docs)
-      if (docs && docs.length > 0 && deleteAfterFetch) {
-        collection.deleteOne({key: entityId})
-      }
     }
   })
 
@@ -131,6 +128,24 @@ const storeEntity = (key, value, collection) => {
       d.resolve(result.result)
     }
   })
+  return d.promise
+}
+
+const tryGetTeams = () => {
+  if (!currentDBConnection) {
+    throw new Error('Illegal state. Open a connection to the database by invoking openConnection before invoking tryGetEntity.')
+  }
+
+  // Get the documents collection
+  const d = Q.defer()
+  teamsCollection.find().toArray(function(err, docs) {
+    if (err) {
+      d.reject(err)
+    } else {
+      d.resolve(docs)
+    }
+  })
+
   return d.promise
 }
 
@@ -178,5 +193,6 @@ module.exports = {
   storeMonitorStatus,
   tryGetChatMessages,
   storeChatMessage,
+  tryGetTeams,
   closeConnection
 }

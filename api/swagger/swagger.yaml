@@ -39,7 +39,7 @@ paths:
           description: Enrollment information
           required: true
           schema:
-            $ref: "#/definitions/InitEnrollmentRequest"
+            $ref: "#/definitions/Team"
       responses:
         "200":
           description: Success
@@ -66,6 +66,20 @@ paths:
           description: Success
           schema:
             $ref: "#/definitions/HealthProbeResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /teams:
+    x-swagger-router-controller: teams
+    get:
+      description: Get all teams.
+      operationId: getTeams
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/TeamArray"
         default:
           description: Error
           schema:
@@ -164,6 +178,14 @@ paths:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
 definitions:
+  TeamArray:
+    required:
+      - teams
+    properties:
+      teams:
+        type: array
+        items:
+          $ref: "#/definitions/Team"
   OpsChatMessageArray:
     required:
       - messages
@@ -203,12 +225,14 @@ definitions:
             timestamp:
               type: string
               format: date-time
-  InitEnrollmentRequest:
+  Team:
     required:
       - teamName
       - teamMembers
       - teamEmailAddress
     properties:
+      id:
+        type: string
       teamName:
         type: string
       teamMembers:
