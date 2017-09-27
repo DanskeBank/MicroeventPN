@@ -43,18 +43,22 @@ const finalizeEnrollmentWorker = (input, next) => {
     next(new Error('Bad Request'), Pipeline.break)
   } else {
     mongodb.tryGetEnrollment(enrollId).then(enrollment => {
-      crypto.randomBytes(48, (err, buffer) => {
-        if (err) {
-          next(err, Pipeline.break)
-        } else {
-          const apiKey = buffer.toString('hex')
-          mongodb.storeTeam(apiKey, enrollment).then(() => {
-            next(null, {status: 'OK', apiKey})
-          }).catch(err => {
+      if (enrollment && enrollment.length == 1 && enrollment[0].value) {
+        crypto.randomBytes(48, (err, buffer) => {
+          if (err) {
             next(err, Pipeline.break)
-          })
-        }
-      })
+          } else {
+            const apiKey = buffer.toString('hex')
+            mongodb.storeTeam(apiKey, enrollment[0].value).then(() => {
+              next(null, {status: 'OK', apiKey})
+            }).catch(err => {
+              next(err, Pipeline.break)
+            })
+          }
+        })
+      } else {
+        next(new Error('Enrollment not found'), Pipeline.break)
+      }
     }).catch(err => {
       next(err, Pipeline.break)
     })

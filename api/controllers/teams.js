@@ -31,7 +31,9 @@ const getTeamsWorker = (input, next) => {
   }
 
   mongodb.tryGetTeams().then(teams => {
-    next(null, {teams})
+    next(null, {teams: teams.map(team => {
+      return team.value
+    })})
   }).catch(err => {
     console.error('Error while trying to fetch monitor status from the database.')
     next(new Error('Internal Server Error'), Pipeline.break)
