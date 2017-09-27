@@ -21,9 +21,8 @@
     "sinon": "^3.3.0",
     "supertest": "^1.0.0"
   },
-  "engine": {
-    "node": "*",
-    "npm": "*"
+  "engines": {
+    "node": ">=6.9.1"
   },
   "scripts": {
     "install": "npm install -g swagger",
