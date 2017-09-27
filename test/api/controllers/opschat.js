@@ -17,7 +17,7 @@ describe('controllers', function() {
           return {
             then (cb) {
               cb({
-                id: 'teamId21768',
+                teamId: 'teamId21768',
                 teamName: 'TeamA',
                 teamMembers: ['Gino', 'Pino'],
                 teamEmailAddress: 'tino@gino.com'
@@ -77,7 +77,7 @@ describe('controllers', function() {
           return {
             then (cb) {
               cb({
-                id: 'teamId21768',
+                teamId: 'teamId21768',
                 teamName: 'TeamA',
                 teamMembers: ['Gino', 'Pino'],
                 teamEmailAddress: 'tino@gino.com'
@@ -93,7 +93,7 @@ describe('controllers', function() {
           should.exist(storeChatMessage)
           should.exist(storeChatMessage.team)
           should.exist(storeChatMessage.timestamp)
-          storeChatMessage.team.id.should.eql('teamId21768')
+          storeChatMessage.team.teamId.should.eql('teamId21768')
           storeChatMessage.team.teamName.should.eql('TeamA')
           storeChatMessage.team.teamMembers.should.eql(['Gino', 'Pino'])
           storeChatMessage.team.teamEmailAddress.should.eql('tino@gino.com')

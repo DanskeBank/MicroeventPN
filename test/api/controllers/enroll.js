@@ -10,16 +10,18 @@ describe('controllers', function() {
 
     describe('PUT /enroll', function() {
 
-      it('should return status OK and APIKey', function(done) {
+      it('should return APIKey and TeamId', function(done) {
         const tryGetEnrollmentStub = sinon.stub(enroll.mongodb, 'tryGetEnrollment').callsFake((enrollmentId) => {
           enrollmentId.should.eql('enrollmentId12345')
           return {
             then (cb) {
-              cb({
-                teamName: 'TeamA',
-                teamMembers: ['Gino', 'Pino'],
-                teamEmailAddress: 'tino@gino.com'
-              })
+              cb([{
+                value: {
+                  teamName: 'TeamA',
+                  teamMembers: ['Gino', 'Pino'],
+                  teamEmailAddress: 'tino@gino.com'
+                }
+              }])
               return {
                 catch () {}
               }
@@ -50,8 +52,8 @@ describe('controllers', function() {
           .expect('Content-Type', /application\/json/)
           .expect(200)
           .end(function(err, res) {
-            res.body.status.should.eql('OK')
             should.exist(res.body.apiKey)
+            should.exist(res.body.teamId)
             storeTeamStub.restore()
             tryGetEnrollmentStub.restore()
             done()

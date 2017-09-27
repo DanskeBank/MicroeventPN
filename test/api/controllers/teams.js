@@ -19,16 +19,20 @@ describe('controllers', function() {
             then (cb) {
               cb([
                 {
-                  id: 'blabla2',
-                  teamName: 'TeamB',
-                  teamMembers: ['Zino', 'Xino'],
-                  teamEmailAddress: 'dino@gino.com'
+                  value: {
+                    teamId: 'blabla2',
+                    teamName: 'TeamB',
+                    teamMembers: ['Zino', 'Xino'],
+                    teamEmailAddress: 'dino@gino.com'
+                  }
                 },
                 {
-                  id: 'blabla',
-                  teamName: 'TeamA',
-                  teamMembers: ['Gino', 'Pino'],
-                  teamEmailAddress: 'tino@gino.com'
+                  value: {
+                    teamId: 'blabla',
+                    teamName: 'TeamA',
+                    teamMembers: ['Gino', 'Pino'],
+                    teamEmailAddress: 'tino@gino.com'
+                  }
                 }
               ])
               return {
@@ -48,11 +52,11 @@ describe('controllers', function() {
           .end(function(err, res) {
             should.exist(res.body.teams)
             res.body.teams.length.should.eql(2)
-            res.body.teams[0].id.should.eql('blabla2')
+            res.body.teams[0].teamId.should.eql('blabla2')
             res.body.teams[0].teamName.should.eql('TeamB')
             res.body.teams[0].teamMembers.should.eql(['Zino', 'Xino'])
             res.body.teams[0].teamEmailAddress.should.eql('dino@gino.com')
-            res.body.teams[1].id.should.eql('blabla')
+            res.body.teams[1].teamId.should.eql('blabla')
             res.body.teams[1].teamName.should.eql('TeamA')
             res.body.teams[1].teamMembers.should.eql(['Gino', 'Pino'])
             res.body.teams[1].teamEmailAddress.should.eql('tino@gino.com')

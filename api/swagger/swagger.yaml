@@ -65,7 +65,7 @@ paths:
         "200":
           description: Success
           schema:
-            $ref: "#/definitions/HealthProbeResponse"
+            $ref: "#/definitions/EnrollResponse"
         default:
           description: Error
           schema:
@@ -178,6 +178,15 @@ paths:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
 definitions:
+  EnrollResponse:
+    required:
+      - apiKey
+      - teamId
+    properties:
+      apiKey:
+        type: string
+      teamId:
+        type: string
   TeamArray:
     required:
       - teams

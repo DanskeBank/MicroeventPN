@@ -49,8 +49,10 @@ const finalizeEnrollmentWorker = (input, next) => {
             next(err, Pipeline.break)
           } else {
             const apiKey = buffer.toString('hex')
+            const team = enrollment[0].value
+            team.teamId = uuidv4()
             mongodb.storeTeam(apiKey, enrollment[0].value).then(() => {
-              next(null, {status: 'OK', apiKey})
+              next(null, {apiKey, teamId: team.teamId})
             }).catch(err => {
               next(err, Pipeline.break)
             })

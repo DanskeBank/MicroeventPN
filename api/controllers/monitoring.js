@@ -36,13 +36,13 @@ const getStatusWorker = (input, next) => {
     return
   }
 
-  if (input.team.id !== AdminId) {
+  const teamId = input.swagger.params.teamId.value
+  if (input.team.teamId !== AdminId && input.team.teamId !== teamId) {
     console.error('Hacker alarm. This is malicius behaviour. Aborting...')
     next(new Error('Unauthorized'), Pipeline.break)
     return
   }
 
-  const teamId = input.swagger.params.teamId.value
   mongodb.tryGetMonitorStatus(teamId).then(monitorStatus => {
     next(null, monitorStatus)
   }).catch(err => {
@@ -59,7 +59,7 @@ const pushUpdateWorker = (input, next) => {
   }
 
   const teamId = input.swagger.params.teamId.value
-  if (input.team.id !== teamId) {
+  if (input.team.teamId !== teamId) {
     console.error('Hacker alarm. This is malicius behaviour. Aborting...')
     next(new Error('Unauthorized'), Pipeline.break)
     return

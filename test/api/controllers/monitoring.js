@@ -14,6 +14,23 @@ describe('controllers', function() {
 
         process.env.ADMIN_APIKEY = 'ThisIsAdmin!'
 
+        const tryGetTeamStub = sinon.stub(enroll.mongodb, 'tryGetTeam').callsFake((apiKey) => {
+          apiKey.should.eql('ThisIsAdmin!')
+          return {
+            then (cb) {
+              cb({
+                teamId: 'teamId21768',
+                teamName: 'TeamA',
+                teamMembers: ['Gino', 'Pino'],
+                teamEmailAddress: 'tino@gino.com'
+              })
+              return {
+                catch () {}
+              }
+            },
+          }
+        })
+
         const tryGetMonitorStatusStub = sinon.stub(enroll.mongodb, 'tryGetMonitorStatus').callsFake((teamId) => {
           teamId.should.eql('teamId21768')
           return {
@@ -52,6 +69,74 @@ describe('controllers', function() {
             res.body.microservices[1].name.should.eql('APIGateway')
             res.body.microservices[1].status.should.eql(false)
             tryGetMonitorStatusStub.restore()
+            tryGetTeamStub.restore()
+            done()
+          })
+      })
+    })
+
+    describe('GET /monitoring/teamId21768', function() {
+
+      it('should return status OK for non Admin', function(done) {
+        
+        const tryGetTeamStub = sinon.stub(enroll.mongodb, 'tryGetTeam').callsFake((apiKey) => {
+          apiKey.should.eql('apiKey8937987389!')
+          return {
+            then (cb) {
+              cb({
+                teamId: 'teamId21768',
+                teamName: 'TeamA',
+                teamMembers: ['Gino', 'Pino'],
+                teamEmailAddress: 'tino@gino.com'
+              })
+              return {
+                catch () {}
+              }
+            },
+          }
+        })
+
+        const tryGetMonitorStatusStub = sinon.stub(enroll.mongodb, 'tryGetMonitorStatus').callsFake((teamId) => {
+          teamId.should.eql('teamId21768')
+          return {
+            then (cb) {
+              cb({
+                  microservices: [
+                    {
+                      name: 'MonitorMS',
+                      status: true
+                    },
+                    {
+                      name: 'APIGateway',
+                      status: false
+                    }
+                  ]
+                })
+              return {
+                catch () {}
+              }
+            },
+          }
+        })
+
+        process.env.ADMIN_APIKEY = 'ThisIsAdmin!'
+
+        request(server)
+          .get('/monitoring/teamId21768')
+          .set('Accept', 'application/json')
+          .set('Authorization', 'apiKey8937987389!')
+          .set('Content-Type', 'application/json')
+          .expect('Content-Type', /application\/json/)
+          .expect(200)
+          .end(function(err, res) {
+            should.exist(res.body.microservices)
+            res.body.microservices.length.should.eql(2)
+            res.body.microservices[0].name.should.eql('MonitorMS')
+            res.body.microservices[0].status.should.eql(true)
+            res.body.microservices[1].name.should.eql('APIGateway')
+            res.body.microservices[1].status.should.eql(false)
+            tryGetTeamStub.restore()
+            tryGetMonitorStatusStub.restore()
             done()
           })
       })
@@ -66,7 +151,7 @@ describe('controllers', function() {
           return {
             then (cb) {
               cb({
-                id: 'blabla',
+                teamId: 'blabla',
                 teamName: 'TeamA',
                 teamMembers: ['Gino', 'Pino'],
                 teamEmailAddress: 'tino@gino.com'
@@ -104,7 +189,7 @@ describe('controllers', function() {
           return {
             then (cb) {
               cb({
-                id: 'teamId21768',
+                teamId: 'teamId21768',
                 teamName: 'TeamA',
                 teamMembers: ['Gino', 'Pino'],
                 teamEmailAddress: 'tino@gino.com'
@@ -172,7 +257,7 @@ describe('controllers', function() {
           return {
             then (cb) {
               cb({
-                id: 'wrongTeam',
+                teamId: 'wrongTeam',
                 teamName: 'TeamWrong',
                 teamMembers: ['Fino', 'Dino'],
                 teamEmailAddress: 'zino@gino.com'

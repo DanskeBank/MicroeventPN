@@ -20,9 +20,9 @@ const authenticateCall = (input, next) => {
     return
   }
 
-  if ( apiKey == process.env.ADMIN_APIKEY) {
+  if ( apiKey == process.env.ADMIN_APIKEY ) {
     input.team = {
-      id: 1,
+      teamId: 1,
       teamName: 'Administrators',
       teamEmailAddress: 'admin@parsonsnet.com',
       teamMembers: ['TheBigBrother']

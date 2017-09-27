@@ -24,7 +24,7 @@ const getTeamsWorker = (input, next) => {
     return
   }
 
-  if (input.team.id !== AdminId) {
+  if (input.team.teamId !== AdminId) {
     console.error('Hacker alarm. This is malicius behaviour. Aborting...')
     next(new Error('Unauthorized'), Pipeline.break)
     return
